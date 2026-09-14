@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Fase 3: instalar el APK que llega por artifact.ready. Es un permiso "especial":
+         el usuario tiene que activarlo a mano una vez en Ajustes (ApkInstaller.kt lleva
+         al usuario ahi si hace falta), Android no deja concederlo con un dialogo normal. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Mantener el WebSocket vivo con la app en segundo plano (ConnectionService):
+         sin esto Android puede matar el proceso al minimizar y se pierde la conexion
+         y con ella cualquier mensaje que llegue mientras tanto (ver ARQUITECTURA.md
+         Fase 3). "dataSync" porque lo que hace es mantener un canal de datos abierto,
+         no reproducir audio ni ubicacion. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Android 13+ exige permiso en tiempo de ejecucion para mostrar la notificacion
+         persistente del foreground service (se pide en MainActivity). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Controladora">
+
+        <!-- No hace falta network_security_config: no usamos el almacen de confianza
+             del sistema. La app solo confia en nuestra CA (ver net/Tls.kt). -->
+
+        <!-- `configChanges` es lo que hace utilizable el vídeo. La ventana del PC
+             es apaisada (1936x1056) y el móvil se usa en vertical, así que con
+             SCALE_ASPECT_FIT la imagen queda en una tira horizontal minúscula
+             entre dos bandas negras: la forma natural de verla entera y grande es
+             girar el teléfono. Sin esto, girarlo RECREA la Activity, y con ella se
+             va la superficie del renderizador y la conexión de vídeo, o sea que
+             la única salida razonable estaba cerrada. Declarándolos, la rotación
+             es un cambio de tamaño y ya está: el vídeo sigue corriendo.
+             `screenSize` y `smallestScreenSize` van con `orientation` a propósito:
+             desde API 13 girar cambia también el tamaño, y si no se declaran los
+             tres el sistema recrea igualmente. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density|fontScale|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Controladora">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- El APK descargado vive en cache/, fuera del alcance de otras apps: esto
+             concede acceso de solo lectura AL INSTALADOR DEL SISTEMA, y solo mientras
+             dura el Intent (ver ApkInstaller.kt), no un permiso permanente. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- Aloja el ControladoraClient fuera del ViewModel/Activity: mientras este
+             servicio este en foreground (ver ConnectionService.kt) el socket sobrevive
+             a que el usuario cambie de app (p.ej. para poner musica). Solo se para al
+             pulsar "Desconectar" o cuando el usuario cierra la app del todo. -->
+        <service
+            android:name=".net.ConnectionService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+    </application>
+
+</manifest>

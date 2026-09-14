@@ -1,0 +1,34 @@
+# Secretos: certificados y token. NUNCA al repo.
+pc/certs/
+pc/config.json
+
+# Python
+pc/.venv/
+__pycache__/
+*.pyc
+
+# Android. secrets.properties y los assets de certificados son secretos.
+movil/local.properties
+movil/secrets.properties
+movil/app/src/main/assets/client.p12
+movil/app/src/main/assets/ca.crt
+movil/.gradle/
+movil/.kotlin/
+movil/build/
+movil/app/build/
+movil/.idea/
+*.jks
+*.keystore
+
+# Artefactos de build servidos al movil
+artifacts/
+
+# Capturas y logs de depuracion personal: IPs reales (publica, LAN, Tailscale),
+# cuenta de Tailscale, numeros de serie de dispositivos, rutas de usuario.
+pc/*.png
+pc/*.log
+
+# Buzon del ayudante de administrador (controladora/elevate.py): comandos en
+# vuelo y su salida. Es basura de ejecucion, y ademas puede llevar dentro
+# cualquier cosa que se haya aprobado desde el movil.
+pc/.admin/

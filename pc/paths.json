@@ -1,0 +1,82 @@
+{
+  "_comment": "Rutas absolutas y proyectos conocidos. NO tiene secretos: este fichero SI va al repo. El PATH de Windows no tiene java, adb, gradle ni node, asi que aqui todo va por ruta absoluta. Ampliable a mano o por Claude Code. Sustituye <usuario> por tu propio usuario de Windows.",
+
+  "apps": {
+    "android_studio": {
+      "exe": "C:\\Program Files\\Android\\Android Studio\\bin\\studio64.exe",
+      "descripcion": "Android Studio"
+    },
+    "intellij": {
+      "exe": "C:\\Program Files\\JetBrains\\IntelliJ IDEA Community Edition 2025.2.6.2\\bin\\idea64.exe",
+      "descripcion": "IntelliJ IDEA Community (mods de Java)"
+    },
+    "unity_hub": {
+      "exe": "C:\\Program Files\\Unity Hub\\Unity Hub.exe",
+      "descripcion": "Unity Hub"
+    },
+    "anydesk": {
+      "exe": "C:\\Users\\<usuario>\\Downloads\\AnyDesk.exe",
+      "descripcion": "AnyDesk (control remoto del PC). La red de seguridad para cuando el chat se cae.",
+      "_comment": "OJO: es el portable que se bajo a Downloads, NO esta instalado. Vive en una carpeta que se vacia sin pensar, y si desaparece te quedas sin la via de recuperacion justo el dia que la necesites. Si esto va a ser el plan B de verdad, conviene instalarlo (o moverlo a una carpeta seria) y actualizar esta ruta. El codigo NO se guarda aqui: lo lee la tool anydesk_id de system.conf en cada llamada, porque este fichero va al repo."
+    }
+  },
+
+  "_comment_recibidos": "Donde aterrizan los ficheros que manda el movil (controladora/recibidos.py). Cambia esta ruta y cambia el destino, sin tocar codigo. Si se quita, se usa Documentos/ControlaPics.",
+  "recibidos": "C:\\Users\\<usuario>\\Documents\\ControlaPics",
+
+  "bin": {
+    "adb": "C:\\Users\\<usuario>\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+    "java_home": "C:\\Program Files\\Android\\Android Studio\\jbr",
+    "android_sdk": "C:\\Users\\<usuario>\\AppData\\Local\\Android\\Sdk"
+  },
+
+  "unity_editors": {
+    "2022.3.62f1": "C:\\Program Files\\Unity\\Hub\\Editor\\2022.3.62f1\\Editor\\Unity.exe",
+    "2022.3.62f3": "C:\\Program Files\\Unity\\Hub\\Editor\\2022.3.62f3\\Editor\\Unity.exe"
+  },
+
+  "ollama": {
+    "url": "http://127.0.0.1:11434",
+    "exe": "C:\\Users\\<usuario>\\AppData\\Local\\Programs\\Ollama\\ollama.exe",
+    "model": "qwen3:8b",
+    "keep_alive": "5m",
+    "num_ctx": 16384,
+    "temperature": 0.2,
+    "_comment_temperature": "Ollama usa 0.8 por defecto. Elegir herramienta no es creativo: con 0.8, la misma frase a veces llamaba a la tool correcta y a veces se inventaba que no se podia. 0.2 la deja decidida sin acartonar el texto con el que contesta.",
+    "_comment_num_ctx": "Tokens de contexto. NO lo quites: si no se manda, Ollama coge 4096 por defecto y, al desbordar, trunca por el principio -- tirando el system prompt sin avisar. El sintoma es una IA local que 'de repente no sabe hacer nada'. 16384 en Q4 son ~1 GB extra de KV cache en la 1080 Ti.",
+    "_comment": "keep_alive: cuanto se queda el modelo en VRAM tras responder. '0' lo descarga al instante, '5m' lo deja por si sigues hablando. Dormir la IA = descargarlo (tool ai_sleep). En una 1080 Ti tarda 3-5s en volver a cargar, asi que se puede ser agresivo."
+  },
+
+  "sensores": {
+    "lhm_exe": "C:\\Users\\<usuario>\\AppData\\Local\\Microsoft\\WinGet\\Packages\\LibreHardwareMonitor.LibreHardwareMonitor_Microsoft.Winget.Source_8wekyb3d8bbwe\\LibreHardwareMonitor.exe",
+    "url": "http://127.0.0.1:8085/data.json",
+    "_comment": "Quien lee la temperatura de la CPU. Windows no la da a un proceso normal: hace falta LHM, elevado (su driver lo exige) y con el servidor web activo (runWebServerMenuItem en LibreHardwareMonitor.config, junto al .exe). Lo arranca y lo mata run.py via controladora/sensores.py, asi que vive y muere con arrancar.bat como Ollama. OJO con la ruta: la pone winget y lleva un hash dentro, asi que se rompe cuando LHM se actualice; si el Monitor deja de dar temperatura, es probable que sea esto. Sin LHM no se rompe nada: el Monitor enseña la nota y ya."
+  },
+
+  "phone": {
+    "tailscale_ip": "100.x.y.z",
+    "adb_port": 5555,
+    "nombre": "Pixel 6 Pro",
+    "_comment": "Si cambias de movil o se le reasigna otra IP de Tailscale, se cambia AQUI, no en ningun .py. adb_connect (pc/tools/adb_connect.py) usa esto para reconectar adb sin pasar por Android Studio. El modo TCP/IP fijo en el puerto de arriba se resetea si el movil reinicia o si tocas el interruptor de Depuracion inalambrica (Ajustes -> Opciones de desarrollador -> Depuracion inalambrica): hace falta un cable USB una vez (adb tcpip 5555) o, en este telefono, apagar y encender ese interruptor. Verificalo con adb_connect: si dice 'Connection refused' es que el modo esta apagado; si dice 'timed out' o 'No route to host' es que Tailscale no esta conectado en el movil, no la IP."
+  },
+
+  "_comment_projects": "Registro de otros proyectos gradle/unity en este PC, para que build_and_install los encuentre por nombre. Se ha quitado la lista real (mezclaba proyectos de terceros) - anade aqui los tuyos con el mismo formato.",
+  "projects": {
+    "controladora": {
+      "path": "E:\\AppControladora\\movil",
+      "type": "gradle",
+      "descripcion": "La propia app Controladora"
+    },
+    "ejemplo_gradle": {
+      "path": "E:\\RutaDeTuProyecto",
+      "type": "gradle",
+      "descripcion": "Ejemplo: otro proyecto Android/Gradle que quieras poder compilar por nombre"
+    },
+    "ejemplo_unity": {
+      "path": "E:\\RutaDeTuProyectoUnity",
+      "type": "unity",
+      "unity_version": "2022.3.62f3",
+      "descripcion": "Ejemplo: un proyecto Unity"
+    }
+  }
+}

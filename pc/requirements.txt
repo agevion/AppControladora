@@ -1,0 +1,24 @@
+# OJO con starlette: claude-agent-sdk arrastra `mcp`, que exige starlette >=1.3.
+# FastAPI 0.115 no arranca con ese starlette (Router.__init__ ya no acepta
+# on_startup). Por eso fastapi va en 0.139: es la combinacion que convive con
+# el Agent SDK. No bajes fastapi sin comprobar que el server sigue importando.
+fastapi==0.139.0
+uvicorn[standard]==0.51.0
+# Subio de 44 a 50 al entrar aiortc (pyopenssl exige >=45). El pin viejo estaba
+# por gen_certs.py y por el mTLS del servidor: las dos cosas se volvieron a
+# probar con la 50 antes de dejarlo asi (scripts/test_client.py, las 3 pasan).
+cryptography==50.0.0
+websockets==14.1
+pillow==11.1.0
+claude-agent-sdk==0.2.120
+psutil==7.2.2  # system_stats: CPU/RAM. La GPU se lee con nvidia-smi, ya en el sistema.
+
+# Pilotar la app de escritorio (controladora/appctl, ARQUITECTURA.md 5.1).
+comtypes==1.4.16  # UI Automation. Ojo con el apartamento de COM: ver appctl/hilo.py
+
+# Video de la ventana por WebRTC (Fase 4). `av` trae libx264, asi que H.264 va
+# sin instalar nada mas. La captura NO necesita `windows-capture`: PrintWindow
+# da 59 fps y captura aunque la ventana este tapada (ver appctl/capture.py).
+aiortc==1.15.0
+av==17.1.0
+numpy==2.2.6

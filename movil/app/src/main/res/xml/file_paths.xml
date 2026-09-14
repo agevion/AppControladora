@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Los APK bajados por ControladoraClient.downloadArtifact() van a cacheDir/apks/.
+     Esto es lo que le dice al FileProvider (manifest) que esa subcarpeta es visible
+     para el Uri que se comparte con el instalador del sistema (ver ApkInstaller.kt). -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="apks" path="apks/" />
+</paths>
