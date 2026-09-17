@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import ssl
 from pathlib import Path
 
@@ -17,7 +18,13 @@ PC_DIR = Path(__file__).resolve().parent.parent
 CERTS = PC_DIR / "certs"
 CONFIG = json.loads((PC_DIR / "config.json").read_text(encoding="utf-8"))
 
-HOST = "192.168.1.50"  # sustituye por la IP LAN real de tu PC
+# La IP real no vive en el repo: sale del entorno o de config.json.
+HOST = os.environ.get("CONTROLADORA_HOST") or CONFIG.get("lan_host")
+if not HOST:
+    raise SystemExit(
+        'Falta la IP LAN del PC: exporta CONTROLADORA_HOST=192.168.1.X o anade\n'
+        '"lan_host" a config.json.'
+    )
 URI = f"wss://{HOST}:{CONFIG['port']}/ws"
 
 

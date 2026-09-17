@@ -78,7 +78,7 @@ pc/                 servicio Python (FastAPI + WebSocket sobre mTLS)
   tools/            UNA TOOL POR FICHERO. El punto de extension.
   scripts/          PKI, sincronizacion de secretos, tests
   certs/            CA + certs. NO va al repo.
-  config.json       puerto + token. NO va al repo.
+  config.json       puerto, token, passwords y host real. NO va al repo.
   paths.json        rutas de IDEs y proyectos. Sin secretos: SI va al repo.
 movil/              app Android (Kotlin + Compose)
 ```

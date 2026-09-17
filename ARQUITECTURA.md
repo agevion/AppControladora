@@ -64,10 +64,10 @@ llama.cpp/Ollama funciona perfectamente; no intentar cargar modelos en FP16 nati
 | | |
 |---|---|
 | IP pública | `203.0.113.10` (ejemplo — sustituye por la tuya) |
-| IP local del PC | `192.168.1.50` (iface `Ethernet 2`) |
+| IP local del PC | `192.168.1.X` (ejemplo — la real va en `config.json`) |
 | Gateway | `192.168.1.1` |
 | **CGNAT** | **NO.** El salto 2 del traceroute es pública y del mismo /24 que la IP pública del PC. IP pública real. |
-| Interfaz a ignorar | Radmin VPN (`26.167.147.0`) — no tiene cliente Android, no se usa |
+| Interfaz a ignorar | Radmin VPN (rango `26.x.x.x`) — no tiene cliente Android, no se usa |
 
 **Consecuencia importante:** al haber IP pública real, en la Fase 4 el WebRTC conecta
 **directo (P2P)**. No hace falta TURN, ni VPS, ni relé de ningún tipo.
@@ -1237,8 +1237,9 @@ razonamiento habría encontrado:
   veces sin más diferencia entre intentos que el muestreo. A **0.2**: 3/3 y sin
   dudar. Eso solo se ve repitiendo la misma frase; una pasada no prueba nada.
 - **No sabía a quién administraba.** *"Apunta esto en un fichero del escritorio"* →
-  `C:\Users\Ale\Desktop\...`, que no existe: dedujo el usuario de Windows del
-  nombre de la persona que sale en el prompt, porque era el único dato que tenía.
+  `C:\Users\<nombre de pila>\Desktop\...`, que no existe: dedujo el usuario de
+  Windows del nombre de la persona que sale en el prompt, porque era el único
+  dato que tenía.
   Decirle "no inventes rutas" no arregla eso — no había forma de que lo supiera.
   Ahora `_hechos_pc()` le da usuario, carpeta personal, escritorio (comprobado en
   disco: puede estar en OneDrive o llamarse "Escritorio"), descargas, unidades y

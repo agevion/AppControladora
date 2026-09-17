@@ -35,19 +35,23 @@ android {
         versionCode = 1
         versionName = "0.1"
 
-        buildConfigField("String", "DEFAULT_HOST", "\"${secret("host", "192.168.1.50")}\"")
+        buildConfigField("String", "DEFAULT_HOST", "\"${secret("host", "")}\"")
         buildConfigField("int", "DEFAULT_PORT", secret("port", "8443"))
         buildConfigField("String", "TOKEN", "\"${secret("token", "")}\"")
-        buildConfigField("String", "P12_PASSWORD", "\"${secret("p12_password", "controladora")}\"")
+        buildConfigField("String", "P12_PASSWORD", "\"${secret("p12_password", "")}\"")
     }
 
     signingConfigs {
-        if (releaseKeystore.exists()) {
+        // Sin secrets.properties no hay password valida para el keystore, asi que
+        // la release se queda sin configuracion de firma en vez de intentarlo con
+        // una escrita aqui.
+        val keystorePassword: String? = secrets.getProperty("release_keystore_password")
+        if (releaseKeystore.exists() && keystorePassword != null) {
             create("release") {
                 storeFile = releaseKeystore
-                storePassword = secret("release_keystore_password", "controladora")
+                storePassword = keystorePassword
                 keyAlias = secret("release_key_alias", "controladora")
-                keyPassword = secret("release_key_password", "controladora")
+                keyPassword = secret("release_key_password", keystorePassword)
             }
         }
     }

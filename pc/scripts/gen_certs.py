@@ -15,6 +15,7 @@ import argparse
 import datetime as dt
 import ipaddress
 import json
+import os
 import secrets
 import sys
 from pathlib import Path
@@ -31,7 +32,27 @@ CONFIG = PC_DIR / "config.json"
 
 CA_YEARS = 10
 LEAF_YEARS = 5
-CLIENT_P12_PASSWORD = b"controladora"  # el p12 viaja dentro del APK; la defensa real es la clave privada, no esta password
+
+
+def config_secret(key: str, env_var: str) -> str:
+    """Secreto que vive en config.json (fuera del repo) o en una variable de entorno.
+
+    Si no existe todavia se genera al azar y se guarda, de modo que el repositorio
+    nunca lleve dentro una password real. La del p12 sigue siendo poco relevante
+    —el fichero viaja dentro del APK y la defensa real es la clave privada— pero
+    publicarla en el codigo no aporta nada.
+    """
+    del_entorno = os.environ.get(env_var)
+    if del_entorno:
+        return del_entorno
+
+    data = json.loads(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
+    valor = data.get(key)
+    if not valor:
+        valor = secrets.token_urlsafe(24)
+        data[key] = valor
+        CONFIG.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return valor
 
 
 def _now() -> dt.datetime:
@@ -155,6 +176,8 @@ def make_client() -> None:
     _write_key(CERTS / "client.key", key)
     _write_cert(CERTS / "client.crt", cert)
 
+    password = config_secret("p12_password", "CONTROLADORA_P12_PASSWORD").encode()
+
     # Android lee PKCS12 nativamente. Usamos cifrado PBESv1/3DES porque el AES-256
     # que sale por defecto no lo tragan todas las versiones de Android.
     try:
@@ -162,10 +185,10 @@ def make_client() -> None:
             pkcs12.PKCS12Encryption()
             .key_cert_algorithm(pkcs12.PBES.PBESv1SHA1And3KeyTripleDESCBC)
             .hmac_hash(hashes.SHA1())
-            .build(CLIENT_P12_PASSWORD)
+            .build(password)
         )
     except Exception:
-        enc = serialization.BestAvailableEncryption(CLIENT_P12_PASSWORD)
+        enc = serialization.BestAvailableEncryption(password)
 
     p12 = pkcs12.serialize_key_and_certificates(
         name=b"movil",
@@ -179,21 +202,25 @@ def make_client() -> None:
 
 
 def ensure_config(sans: list[str]) -> None:
-    if CONFIG.exists():
+    """Completa config.json con lo que le falte, sin pisar lo que ya haya dentro.
+
+    No basta con crearlo cuando no existe: `config_secret` puede haberlo creado ya
+    con la password del p12 y nada mas.
+    """
+    data = json.loads(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
+    defaults = {
+        "host": "0.0.0.0",
+        "port": 8443,
+        "token": secrets.token_urlsafe(32),
+        "san": sans,
+    }
+    faltan = [clave for clave in defaults if clave not in data]
+    if not faltan:
         return
-    CONFIG.write_text(
-        json.dumps(
-            {
-                "host": "0.0.0.0",
-                "port": 8443,
-                "token": secrets.token_urlsafe(32),
-                "san": sans,
-            },
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
-    print(f"  config.json  (token generado)")
+
+    data.update({clave: defaults[clave] for clave in faltan})
+    CONFIG.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    print(f"  config.json  ({', '.join(faltan)})")
 
 
 def main() -> int:
@@ -204,12 +231,21 @@ def main() -> int:
 
     CERTS.mkdir(parents=True, exist_ok=True)
 
-    # Ejemplo generico: sustituye por la IP LAN y publica reales del PC (o, mejor,
-    # define "san" en config.json, que ya esta fuera del repo).
-    default_sans = ["localhost", "127.0.0.1", "192.168.1.50", "203.0.113.10"]
-    sans = default_sans
-    if CONFIG.exists():
-        sans = json.loads(CONFIG.read_text(encoding="utf-8")).get("san") or default_sans
+    # Los SAN reales (IP LAN, IP publica o DDNS del PC) se declaran en "san" dentro
+    # de config.json, que esta fuera del repo. Aqui solo queda el minimo local.
+    config_previa = json.loads(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
+    default_sans = ["localhost", "127.0.0.1"]
+    sans = config_previa.get("san") or default_sans
+    if sans == default_sans:
+        print("  AVISO: sin \"san\" en config.json el certificado solo vale para localhost.")
+
+    # Un p12 anterior a que las passwords salieran del codigo: no hay forma de
+    # saber con cual se cifro, asi que se reemite en lugar de dejarlo inservible.
+    p12_huerfano = (CERTS / "client.p12").exists() and not (
+        config_previa.get("p12_password") or os.environ.get("CONTROLADORA_P12_PASSWORD")
+    )
+    if p12_huerfano:
+        print("  client.p12 existe pero su password no consta: se reemite el cliente.")
 
     print("Generando PKI en", CERTS)
 
@@ -223,7 +259,7 @@ def main() -> int:
     else:
         print("  server.crt ya existe (usa --force-server para reemitirlo)")
 
-    if args.force_all or not (CERTS / "client.crt").exists():
+    if args.force_all or p12_huerfano or not (CERTS / "client.crt").exists():
         make_client()
     else:
         print("  client.crt ya existe")
